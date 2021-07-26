@@ -129,7 +129,7 @@ Graal VM  ---"Run Programs Faster Anywhere"  最有可能替代HotSpot。
 
 ### 第三步 初始化
 
-- 初始化阶段就是执行**类的构造器方法 <clinit>** 的过程（cl可以理解为 class  ，init为 inital）
+- 初始化阶段就是执行**类的构造器方法 clinit** 的过程（cl可以理解为 class  ，init为 inital）
 
 - 此方法不需要定义，是javac编译器自动收集类中的所有变量的赋值动作和静态代码块中的语句合并而来的。
 
@@ -148,9 +148,9 @@ Graal VM  ---"Run Programs Faster Anywhere"  最有可能替代HotSpot。
   }
   ```
 
-- **类的构造器方法 <clinit>**不同于类的构造函数，==当一个类中不存在类变量的时候，则.class文件中没有<clinit>()==
+- **类的构造器方法 clinit**不同于类的构造函数，==当一个类中不存在类变量的时候，则.class文件中没有<clinit>()==
 
-- 若该类有父类，JVM会保证父类的 <clinit>()执行完毕之后再执行子类的<clinit>()
+- 若该类有父类，JVM会保证父类的 clinit()执行完毕之后再执行子类的clinit()
 
   ```java
   class Father{
@@ -895,7 +895,13 @@ JDK7中将StringTable放在堆空间中。
 
 字节跳动： 二面：Java的内存分区 二面：讲讲jvm运行时数据库区 什么时候对象会进入老年代？
 
-京东： JVM的内存结构，Eden和Survivor比例。 JVM内存为什么要分成新生代，老年代，持久代。新生代中为什么要分为Eden和survivor。
+京东： JVM的内存结构，Eden和Survivor比例。 
+
+JVM内存为什么要分成新生代，老年代，持久代。新生代中为什么要分为Eden和survivor。
+
+> - 如果没有Survivor，Eden区每进行一次Minor GC，存活的对象就会被送到老年代。老年代很快被填满，触发Major GC.老年代的内存空间远大于新生代，进行一次Full GC消耗的时间比Minor GC长得多,所以需要分为Eden和Survivor。
+> - Survivor的存在意义，就是减少被送到老年代的对象，进而减少Full GC的发生，Survivor的预筛选保证，只有经历16次Minor GC还能在新生代中存活的对象，才会被送到老年代。
+> - 设置两个Survivor区最大的好处就是解决了碎片化，刚刚新建的对象在Eden中，经历一次Minor GC，Eden中的存活对象就会被移动到第一块survivor space S0，Eden被清空；等Eden区再满了，就再触发一次Minor GC，Eden和S0中的存活对象又会被复制送入第二块survivor space S1（这个过程非常重要，因为这种复制算法保证了S1中来自S0和Eden两部分的存活对象占用连续的内存空间，避免了碎片化的发生）
 
 天猫： 一面：Jvm内存模型以及分区，需要详细到每个区放什么。 一面：JVM的内存模型，Java8做了什么改
 
@@ -1212,7 +1218,7 @@ public void test3(){
 
 ## intern()的使用
 
-如果不是用双引号声明的string对象，可以使用string提供的intern方法：intern方法会从字符串常量池中查询当前字符串是否存在，若不存在就会将当前字符串放入常量池中。
+**如果不是用双引号声明的string对象，可以使用string提供的intern方法：intern方法会从字符串常量池中查询当前字符串是否存在，若不存在就会将当前字符串放入常量池中。**
 
 比如：
 
@@ -1300,7 +1306,7 @@ package top.aruul;
 public class Demo {
     public static void main(String[] args) {
         String s= new String("1");
-        s.intern();
+        s.intern();        //这里并没有赋值给其他字符串
         String ss = s.intern();
         String s2 = "1";
         System.out.println(s==s2);  //false
@@ -1328,5 +1334,68 @@ public class Demo {
 }
 ```
 
-【p129】
+### 面试题的拓展
+
+```java
+/* s3记录的变量地址为 new String("11")
+         *执行完下面这行代码后，常量池中并没有 "11" */
+String s3 = new String("1") + new String("1");
+String s4 = "11";  //在字符串常量池中生成对象 "11"
+s3.intern();     //这个操作没啥用，因为字符串常量池中已经有 "11"了，而且并没把结果返回给任何对象
+System.out.println(s3==s4);  //jdk8: false
+```
+
+---
+
+```java
+String s = new String("a") + new String("b");  //相当于在堆中new String("ab")
+String s2 = s.intern(); //在字符串常量池中生成一个指向堆中new String("ab")的地址，并返回给s2
+//以下结果均在jdk8中
+//"ab"在字符串常量池中是一个指向new String("ab")的地址，所以和s、s2是同一个东西
+System.out.println(s=="ab");    //true
+System.out.println(s2=="ab");	//true
+```
+
+---
+
+```java
+String x = "ab";
+String s = new String("a") + new String("b");
+String s2 = s.intern();
+//以下结果均在jdk8中
+System.out.println(s2==x);  //true
+System.out.println(s==x);   //false
+```
+
+### 小总结
+
+总结String的intern()的使用：
+
+JDK1.6中，将这个字符串对象尝试放入串池。
+
+- 如果串池中有，则并不会放入。返回已有的串池中的对象的地址
+- 如果没有，会把此**对象复制一份**，放入串池，并返回串池中的对象地址
+
+JDK1.7起，将这个字符串对象尝试放入串池。
+
+- 如果串池中有，则并不会放入。返回已有的串池中的对象的地址
+- 如果没有，则会把**对象的引用地址**复制一份，放入串池，并返回串池中的引用地址
+
+##  G1中的String去重操作
+
+**注意这里说的重复，指的是在堆中的数据，而不是常量池中的，因为常量池中的本身就不会重复**
+
+> 许多大规模的Java应用的瓶颈在于内存，测试表明，在这些类型的应用里面，Java堆中存活的数据集合差不多25%是string对象。更进一步，这里面差不多一半string对象是重复的，重复的意思是说： stringl.equals（string2）= true。堆上存在重复的string对象必然是一种内存的浪费。
+
+
+
+ **G1中的String去重操作:**
+
+- 当垃圾收集器工作的时候，会访问堆上存活的对象。**对每一个访问的对象都会检查是否是候选的要去重的String对象**。
+- 如果是，把这个对象的一个引用插入到队列中等待后续的处理。一个去重的线程在后台运行，处理这个队列。处理队列的一个元素意味着从队列删除这个元素，然后尝试去重它引用的string对象。
+- 使用一个hashtable来记录所有的被string对象使用的不重复的char数组。当去重的时候，会查这个hashtable，来看堆上是否已经存在一个一模一样的char数组。
+- 如果存在，String对象会被调整引用那个数组，释放对原来的数组的引用，最终会被垃圾收集器回收掉。
+- 如果查找失败，char数组会被插入到hashtable，这样以后的时候就可以共享这个数组了。
+
+【p134】
 
