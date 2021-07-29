@@ -1244,7 +1244,28 @@ String myInfo = new string("abc").intern();
 ### new String("a") + new String("b") 会创建几个对象
 
 ```java
-public class StringNewTest {    public static void main(String[] args) {        String str = new String("a") + new String("b");    }}---------------------字节码文件如下---------------------------------- 0 new #2 <java/lang/StringBuilder> 3 dup 4 invokespecial #3 <java/lang/StringBuilder.<init>> 7 new #4 <java/lang/String>10 dup11 ldc #5 <a>13 invokespecial #6 <java/lang/String.<init>>16 invokevirtual #7 <java/lang/StringBuilder.append>19 new #4 <java/lang/String>22 dup23 ldc #8 <b>25 invokespecial #6 <java/lang/String.<init>>28 invokevirtual #7 <java/lang/StringBuilder.append>31 invokevirtual #9 <java/lang/StringBuilder.toString>34 astore_135 return
+public class StringNewTest {
+    public static void main(String[] args) {
+        String str = new String("a") + new String("b");
+    }
+}
+---------------------字节码文件如下----------------------------------
+ 0 new #2 <java/lang/StringBuilder>
+ 3 dup
+ 4 invokespecial #3 <java/lang/StringBuilder.<init>>
+ 7 new #4 <java/lang/String>
+10 dup
+11 ldc #5 <a>
+13 invokespecial #6 <java/lang/String.<init>>
+16 invokevirtual #7 <java/lang/StringBuilder.append>
+19 new #4 <java/lang/String>
+22 dup
+23 ldc #8 <b>
+25 invokespecial #6 <java/lang/String.<init>>
+28 invokevirtual #7 <java/lang/StringBuilder.append>
+31 invokevirtual #9 <java/lang/StringBuilder.toString>
+34 astore_1
+35 return
 ```
 
 ​	六个
@@ -1682,4 +1703,137 @@ $$
 - 整堆收集器：G1
 
 ![image-20210728185810119](https://gitee.com/aruul/a-ru-img/raw/master/img/20210728185811.png)
+
+### 圾收集器的组合关系
+
+![image-20210729163011854](https://gitee.com/aruul/a-ru-img/raw/master/img/20210729163013.png)
+
+- 两个收集器间有连线，表明它们可以搭配使用：Serial/Serial old、Serial/CMS、ParNew/Serial old、ParNew/CMS、Parallel Scavenge/Serial Old、Parallel Scavenge/Parallel 01d、G1；
+- 其中Serial Old作为CMS出现"Concurrent Mode Failure"失败的后备预案。
+- （红色虚线）由于维护和兼容性测试的成本，在JDK 8时将Serial+CMS、ParNew+Serial Old这两个组合声明为废弃（JEP173），并在JDK9中完全取消了这些组合的支持（JEP214），即：移除。
+- （绿色虚线）JDK14中：弃用Parallel Scavenge和Serial Old GC组合（JEP366）
+- （青色虚线）JDK14中：删除CMs垃圾回收器（JEP363）
+
+### 查看默认垃圾收集器
+
+> **-XX:+PrintCommandLineFlags**：查看命令行相关参数（包含使用的垃圾收集器）
+>
+> 使用命令行指令：jinfo -flag 相关垃圾回收器参数 进程ID
+
+## Serial回收器：串行回收
+
+- Serial收集器是最基本，历史最悠久的，是JDK1.3之前回收**新生代**的唯一选择。
+
+- Serial收集器采用的是**复制算法**，**串行回收**和"**Stop The World**"机制的方式执行内存回收
+
+- Serial收集器还提供了用于执行老年代垃圾收集的**Serial Old收集器**。
+
+  **Serial Old收集器**同样也采用了**串行回收**和"**Stop The World**"机制，只不过内存回收算法采用的是**标记--压缩**算法
+
+![image-20210729164632404](https://gitee.com/aruul/a-ru-img/raw/master/img/20210729164633.png)
+
+【注意】这个收集器是个单线程的收集器，**“单线程”不仅是指的是它只会使用一个cpu或者一条收集线程来完成垃圾收集工作**，更重要的是它进行垃圾回收的时候，**必须暂停其他所有的工作线程(Stop The World)**，直到收集结束。
+
+**优势：**
+
+**简单而高效**(与其他收集器的单线程比)，对于限定单个cpu的环境来说，Serial收集器由于没有线程交互的开销，专心做垃圾收集自然可以获得最高的单线程收集效率。**运行在client模式下的虚拟机是个不错的选择。**
+
+**应用场景：**
+
+在用户的桌面应用场景中，可用内存一般不大（几十MB至一两百MB），可以在较短时间内完成垃圾收集（几十ms至一百多ms），只要不频繁发生，使用串行回收器是可以接受的。
+
+**参数设置：**
+
+在HotSpot虚拟机中，使用-XX：+UseSerialGC参数可以指定年轻代和老年代都使用串行收集器。
+
+等价于新生代用Serial GC，且老年代用Serial old GC
+
+## ParNew回收器：并行回收
+
+> Par 是 Parallel的缩写  ， New：只能处理的是**新生代**
+
+- ParNew收集器除了采用**并行回收**的方式执行垃圾回收外，与Serial回收器几乎没有任何区别。
+
+- ParNew收集器在**年轻代**中同样也是采用**标记--复制算法**和“**Stop The World**”的机制
+
+- ParNew 是很多JVM运行在**Service模式下新生代的默认垃圾收集器**
+- 除Serial外，目前只有ParNew GC能与CMS收集器配合工作
+
+
+
+![image-20210729170555163](https://gitee.com/aruul/a-ru-img/raw/master/img/20210729170556.png)
+
+- **对于新生代，回收次数频繁，使用并行方式高效**
+
+- **对于老年代，回收次数少，使用串行方式节省资源。**
+
+**参数设置：**
+
+在程序中，开发人员可以通过选项"-XX：+UseParNewGC"手动指定使用ParNew收集器执行内存回收任务。它表示年轻代使用并行收集器，不影响老年代。
+
+-XX:ParallelGCThreads限制线程数量，默认开启和CPU数据相同的线程数。
+
+## ParNew收集器在任何场景下都比Serial收集器效率高吗？
+
+**ParNew收集器运行在多CPU**的环境下，由于可以充分利用多CPU、多核心等物理硬件资源优势，可以更快速地完成垃圾收集，提升程序
+的吞吐量。
+但是在**单个CPU的环境下**， **ParNew收集器不比 Serial收集器更高效**。虽然 Serial收集器是基于串行回收，但是由于CPU不需要频繁地做任务切换，因此可以有效避免多线程交互过程中产生的一些额外开销.
+
+## Parallel Scavenge：吞吐量优先
+
+- HotSpot的年轻代除了拥有ParNew收集器是基于并行回收的以外，
+
+- **Parallel Scavenge**收集器同样也采用了**复制算法、并行回收和“Stop The World”**
+
+
+
+> **Parallel Scavenge和ParNew的区别？**
+>
+> - **Parallel Scavenge收集器的目标是达到一个可控制的吞吐量，它也被称为吞吐量优先的垃圾收集器。**
+>
+> - **自适应调节策略**也是Parallel Scavenge与ParNew的一个重要区别（自适应调节是指动态的调节内存分配情况）
+
+
+
+- 高吞吐量则可以高效率地利用CPU时间，尽快完成程序的运算任务，主要**适合在后台运算而不需要太多交互的任务**。因此，常见在服务器环境中使用。例如，**那些执行批量处理、订单处理、工资支付、科学计算**的应用程序。
+
+- Parallel Scavenge收集器在JDK1.6时提供了用于执行老年代垃圾收集的Parallel Old收集器，用来代替老年代的Serial Old收集器。
+- **Parallel Old收集器**采用了**标记-压缩算法**，但同样也是基于**并行回收和"stop-the-World"**机制。
+
+![image-20210729200414301](https://gitee.com/aruul/a-ru-img/raw/master/img/20210729200415.png)
+
+- **在程序吞吐量优先的应用场景中，Paralle1收集器和Parallel Old收集器的组合，在server模式下的内存回收性能很不错。**
+
+- **在Java8中，默认是此垃圾收集器。**
+
+
+
+**参数设置：**
+
+- -XX：+UseParallelGC 手动指定年轻代使用Parallel并行收集器执行内存回收任务。
+
+- -XX：+UseParallelOldGC手动指定老年代都是使用并行回收收集器。
+  - 分别适用于新生代和老年代。默认jdk8是开启的。
+  - 上面两个参数，默认开启一个，另一个也会被开启。（互相激活）
+
+- -XX:ParallelGCThreads设置年轻代并行收集器的线程数。一般地，最好与CPU数量相等，以避免过多的线程数影响垃圾收集性能。
+  - 在默认情况下，当CPU数量小于8个，ParallelGCThreads的值等于CPU数量。
+  - 当CPU数量大于8个，ParallelGCThreads的值等于3+[5*CPU_Count]/8]
+
+- -XX:MaxGCPauseMillis 设置垃圾收集器最大停顿时间（即STw的时间）。单位是毫秒。
+  - 为了尽可能地把停顿时间控制在MaxGCPauseMills以内，收集器在工作时会调整java堆大小或者其他一些参数。
+  - 对于用户来讲，停顿时间越短体验越好。但是在服务器端，我们注重高并发，整体的吞吐量。所以服务器端适合Parallel，进行控制。
+  - 该参数使用需谨慎。
+
+- -XX:GCTimeRatio垃圾收集时间占总时间的比例（=1/（N+1））。用于衡量吞吐量的大小。
+  - 取值范围（0，100）。默认值99，也就是垃圾回收时间不超过1%。
+  - 与前一个-xx:MaxGCPauseMillis参数有一定矛盾性。暂停时间越长，Radio参数就容易超过设定的比例。
+
+- -XX:+UseAdaptivesizepplicy 设置Parallel scavenge收集器具有自适应调节策略
+  - 在这种模式下，年轻代的大小、Eden和Survivor的比例、晋升老年代的对象年龄等参数会被自动调整，已达到在堆大小、吞吐量和停顿时间之间的平衡点。
+  - 在手动调优比较困难的场合，可以直接使用这种自适应的方式，仅指定虚拟机的最大堆、目标的吞吐量（GCTimeRatio）和停顿时间（MaxGCPauseMil1s），让虚拟机自己完成调优工作。
+
+## CMS回收器：低延迟
+
+【p182】
 
