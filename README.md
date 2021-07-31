@@ -16,7 +16,7 @@ jvm是运行在操作系统之上的，没有和硬件直接交互
 
 ![image-20210716200826280](https://gitee.com/aruul/a-ru-img/raw/master/img/20210716200827.png)
 
-															==要求会自己画出这张图==
+​															==要求会自己画出这张图==
 
 - HotSport VM是目前市面上最高性能的虚拟机的代表作之一。
 - 它采用解释器与即时编译器并存的架构
@@ -281,7 +281,7 @@ JVM支持**两种**类型的**类加载器**，分别为
 
    红色的为**线程共享区域**，**一个虚拟机实例对应一份**
 
-	**蓝色的是一个线程对应一份**
+​	**蓝色的是一个线程对应一份**
 
 ## 程序计数器(PC计数器)
 
@@ -332,9 +332,9 @@ cpu在执行多线程的时候，实际上会不停地做任务切换，这样�
 
 - **优点：**1. 栈是一种快速有效的分配存储方式，访问速度仪次于程序计数器。
 
-  			2.JVM直接对Java栈的操作只有两个：每个方法执行，伴随着进（入栈、压栈）、执行结束后的出栈工作
-  	
-  			3.对于栈来说不存在垃圾回收问题
+  ​			2.JVM直接对Java栈的操作只有两个：每个方法执行，伴随着进（入栈、压栈）、执行结束后的出栈工作
+
+  ​			3.对于栈来说不存在垃圾回收问题
 
 #### 异常
 
@@ -372,9 +372,9 @@ Java虚拟机也可以动态扩展，但随着扩展会不断地申请内存，�
 
 - 局部变量表( Local Variables)
 
-       **定义为数字数组**
+  ​     **定义为数字数组**
 
-    	**局部变量表，最基本的存储单元是Slot（变量槽）**
+  ​	**局部变量表，最基本的存储单元是Slot（变量槽）**
 
   ![image-20210719162352247](https://gitee.com/aruul/a-ru-img/raw/master/img/20210719162353.png)
 
@@ -491,7 +491,7 @@ Java虚拟机栈用于管理Java方法的调用，而本地方法栈用于管理
 
 ![image-20210720145811206](https://gitee.com/aruul/a-ru-img/raw/master/img/20210720145812.png)
 
-														栈 、堆、方法区之间的关系
+​														栈 、堆、方法区之间的关系
 
 ---
 
@@ -583,7 +583,7 @@ Java**堆区**进一步细分的话，可以划分为**年轻代**和**老年代
 
 ![image-20210721151057588](https://gitee.com/aruul/a-ru-img/raw/master/img/20210721151059.png)
 
-																			配合P73来理解
+​																			配合P73来理解
 
 ### Minor GC、Major GC、Full GC
 
@@ -1034,7 +1034,7 @@ public MyTest{
 
 ![image-20210724164202328](https://gitee.com/aruul/a-ru-img/raw/master/img/20210724164203.png)
 
-																										【纠错】方法区里的Klass改成Class
+​																										【纠错】方法区里的Klass改成Class
 
 # 直接内存
 
@@ -1244,31 +1244,10 @@ String myInfo = new string("abc").intern();
 ### new String("a") + new String("b") 会创建几个对象
 
 ```java
-public class StringNewTest {
-    public static void main(String[] args) {
-        String str = new String("a") + new String("b");
-    }
-}
----------------------字节码文件如下----------------------------------
- 0 new #2 <java/lang/StringBuilder>
- 3 dup
- 4 invokespecial #3 <java/lang/StringBuilder.<init>>
- 7 new #4 <java/lang/String>
-10 dup
-11 ldc #5 <a>
-13 invokespecial #6 <java/lang/String.<init>>
-16 invokevirtual #7 <java/lang/StringBuilder.append>
-19 new #4 <java/lang/String>
-22 dup
-23 ldc #8 <b>
-25 invokespecial #6 <java/lang/String.<init>>
-28 invokevirtual #7 <java/lang/StringBuilder.append>
-31 invokevirtual #9 <java/lang/StringBuilder.toString>
-34 astore_1
-35 return
+public class StringNewTest {    public static void main(String[] args) {        String str = new String("a") + new String("b");    }}---------------------字节码文件如下---------------------------------- 0 new #2 <java/lang/StringBuilder> 3 dup 4 invokespecial #3 <java/lang/StringBuilder.<init>> 7 new #4 <java/lang/String>10 dup11 ldc #5 <a>13 invokespecial #6 <java/lang/String.<init>>16 invokevirtual #7 <java/lang/StringBuilder.append>19 new #4 <java/lang/String>22 dup23 ldc #8 <b>25 invokespecial #6 <java/lang/String.<init>>28 invokevirtual #7 <java/lang/StringBuilder.append>31 invokevirtual #9 <java/lang/StringBuilder.toString>34 astore_135 return
 ```
 
-	六个
+​	六个
 
 - 对象1：new StringBuilder()
 
@@ -1287,84 +1266,31 @@ public class StringNewTest {
   【注意】**调用toString方法，不会在常量池中生成"ab"**
 
   ```java
-  	//StringBuilder中的toString()方法
-  	@Override
-      public String toString() {
-          return new String(value, 0, count);     //这个方法并不会在常量池中生成字符串
-      }
+  	//StringBuilder中的toString()方法	@Override    public String toString() {        return new String(value, 0, count);     //这个方法并不会在常量池中生成字符串    }
   ```
 
 ### 面试题【难】
 
 ```java
-package top.aruul;
-
-/**
- * @author aRu
- * @date 2021/7/17 17:56
- */
-public class Demo {
-    public static void main(String[] args) {
-        String s= new String("1"); //堆中生成new String对象，字符串常量池中生成 "1"
-        s.intern();        //这里并没有赋值给其他字符串
-        String ss = s.intern();
-        String s2 = "1";
-        System.out.println(s==s2);  //false
-        System.out.println(ss==s);  //false
-        System.out.println(ss==s2); //true
-
-        /* s3记录的变量地址为 new String("11")
-         *执行完下面这行代码后，常量池中并没有 "11" */
-        String s3 = new String("1") + new String("1");
-
-        //【注意】这里的话常量池中并没有 "11",
-        // 所以执行下面的intern方法的时候，会在字符串常量池中生成"11"
-        //对于jdk6来说，会直接创建一个 "11" 在字符串常量池中
-        //对于jdk7/jdk8 来说，把字符串常量池移到了堆中，而上一行代码在堆中创建了一个对象：【new String("11")】
-        //为了节省空间，此时，字符串常量池中会创建一个指向【堆中 new String("11")】的地址
-        s3.intern();
-
-        //所以这里创建的 s4指向了字符串常量池中的 {一个指向【堆中 new String("11")】的地址}
-        String s4 = "11";
-
-        //所以这里对于jdk6：false
-        //对于jdk7/jdk8: true
-        System.out.println(s3==s4);
-    }
-}
+package top.aruul;/** * @author aRu * @date 2021/7/17 17:56 */public class Demo {    public static void main(String[] args) {        String s= new String("1"); //堆中生成new String对象，字符串常量池中生成 "1"        s.intern();        //这里并没有赋值给其他字符串        String ss = s.intern();        String s2 = "1";        System.out.println(s==s2);  //false        System.out.println(ss==s);  //false        System.out.println(ss==s2); //true        /* s3记录的变量地址为 new String("11")         *执行完下面这行代码后，常量池中并没有 "11" */        String s3 = new String("1") + new String("1");        //【注意】这里的话常量池中并没有 "11",        // 所以执行下面的intern方法的时候，会在字符串常量池中生成"11"        //对于jdk6来说，会直接创建一个 "11" 在字符串常量池中        //对于jdk7/jdk8 来说，把字符串常量池移到了堆中，而上一行代码在堆中创建了一个对象：【new String("11")】        //为了节省空间，此时，字符串常量池中会创建一个指向【堆中 new String("11")】的地址        s3.intern();        //所以这里创建的 s4指向了字符串常量池中的 {一个指向【堆中 new String("11")】的地址}        String s4 = "11";        //所以这里对于jdk6：false        //对于jdk7/jdk8: true        System.out.println(s3==s4);    }}
 ```
 
 ### 面试题的拓展
 
 ```java
-/* s3记录的变量地址为 new String("11")
-         *执行完下面这行代码后，常量池中并没有 "11" */
-String s3 = new String("1") + new String("1");
-String s4 = "11";  //在字符串常量池中生成对象 "11"
-s3.intern();     //这个操作没啥用，因为字符串常量池中已经有 "11"了，而且并没把结果返回给任何对象
-System.out.println(s3==s4);  //jdk8: false
+/* s3记录的变量地址为 new String("11")         *执行完下面这行代码后，常量池中并没有 "11" */String s3 = new String("1") + new String("1");String s4 = "11";  //在字符串常量池中生成对象 "11"s3.intern();     //这个操作没啥用，因为字符串常量池中已经有 "11"了，而且并没把结果返回给任何对象System.out.println(s3==s4);  //jdk8: false
 ```
 
 ---
 
 ```java
-String s = new String("a") + new String("b");  //相当于在堆中new String("ab")
-String s2 = s.intern(); //在字符串常量池中生成一个指向堆中new String("ab")的地址，并返回给s2
-//以下结果均在jdk8中
-//"ab"在字符串常量池中是一个指向new String("ab")的地址，所以和s、s2是同一个东西
-System.out.println(s=="ab");    //true
-System.out.println(s2=="ab");	//true
+String s = new String("a") + new String("b");  //相当于在堆中new String("ab")String s2 = s.intern(); //在字符串常量池中生成一个指向堆中new String("ab")的地址，并返回给s2//以下结果均在jdk8中//"ab"在字符串常量池中是一个指向new String("ab")的地址，所以和s、s2是同一个东西System.out.println(s=="ab");    //trueSystem.out.println(s2=="ab");	//true
 ```
 
 ---
 
 ```java
-String x = "ab";
-String s = new String("a") + new String("b");
-String s2 = s.intern();
-//以下结果均在jdk8中
-System.out.println(s2==x);  //true
-System.out.println(s==x);   //false
+String x = "ab";String s = new String("a") + new String("b");String s2 = s.intern();//以下结果均在jdk8中System.out.println(s2==x);  //trueSystem.out.println(s==x);   //false
 ```
 
 ### 小总结
@@ -1457,7 +1383,7 @@ GC主要关注于**方法区**和**堆**的垃圾回收
 
 可达性分析算法基本思路：
 
-- 可达性分析算法是以根对象集合（GC  Roots）为起始点，按照从上至下的方式搜索被根对象集合所连接的目标对象是否可达。
+- 可达性分析算法是以**根对象集合（GC  Roots）**为起始点，按照从上至下的方式搜索被根对象集合所连接的目标对象是否可达。
 
   > "GCRoots”根集合就是一组必须活跃的引用
 
@@ -1476,7 +1402,7 @@ GC主要关注于**方法区**和**堆**的垃圾回收
 - 本地方法栈内JNI（通常说的本地方法）引用的对象方法区中**类静态属性**引用的对象
   - 比如：Java类的引用类型静态变量
 - 方法区中常量引用的对象
-  - 比如：字符串常量池（string Table）里的引用
+  - 比如：字符串常量池（String Table）里的引用
 - 所有被同步锁synchronized持有的对象
 - Java虚拟机内部的引用。
   - 基本数据类型对应的Class对象，一些常驻的异常对象（如：Nu11PointerException、outofMemoryError），系统类加载器。
@@ -1486,7 +1412,7 @@ GC主要关注于**方法区**和**堆**的垃圾回收
 
 【注意】如果要使用可达性分析算法来判断内存是否可回收，那么分析工作必须在一个能保障一致性的快照中进行。这点不满足的话分析结果的准确性就无法保证。
 
-这点也是导致GC进行时必须“stop The World”的一个重要原因。
+这点也是导致GC进行时必须“Stop The World”的一个重要原因。
 
 即使是号称（几乎）不会发生停顿的CMS收集器中，枚举根节点时也是必须要停顿的。
 
@@ -1508,7 +1434,7 @@ GC主要关注于**方法区**和**堆**的垃圾回收
 
 - 不可触及的：对象的finalize()被调用，并且没有复活，那么就会进入不可触及状态。
 
-  						不可触及的对象不可能被复活，因为**finalize()只会被调用一次**。
+  ​						不可触及的对象不可能被复活，因为**finalize()只会被调用一次**。
 
 判定一个对象objA是否可回收，至少要经过两次标记过程：
 
@@ -1775,6 +1701,8 @@ $$
 
 ## Serial回收器：串行回收
 
+**【关键词】串行	新生代	复制算法	client模式**  
+
 - Serial收集器是最基本，历史最悠久的，是JDK1.3之前回收**新生代**的唯一选择。
 
 - Serial收集器采用的是**复制算法**，**串行回收**和"**Stop The World**"机制的方式执行内存回收
@@ -1802,6 +1730,8 @@ $$
 等价于新生代用Serial GC，且老年代用Serial old GC
 
 ## ParNew回收器：并行回收
+
+**【关键词】并行	新生代	复制算法	Service模式**
 
 > Par 是 Parallel的缩写  ， New：只能处理的是**新生代**
 
@@ -1833,6 +1763,8 @@ $$
 但是在**单个CPU的环境下**， **ParNew收集器不比 Serial收集器更高效**。虽然 Serial收集器是基于串行回收，但是由于CPU不需要频繁地做任务切换，因此可以有效避免多线程交互过程中产生的一些额外开销.
 
 ## Parallel Scavenge：吞吐量优先
+
+**【关键词】并行	新生代	复制算法	吞吐量优先**
 
 - HotSpot的年轻代除了拥有ParNew收集器是基于并行回收的以外，
 
@@ -1888,6 +1820,8 @@ $$
 
 ## CMS回收器：低延迟
 
+**【关键词】并发	老年代	标记--清除算法	低延迟**
+
 ### 概述
 
 - 在JDK1.5时期，Hotspot推出了一款在强交互应用中几乎可认为有划时代意义的垃圾收集器：**CMS（Concurrent-Mark-Sweep）**收集器，这款收集器是HotSpot虚拟机中第一款真正意义上的并发收集器，**它第一次实现了让垃圾收集线程与用户线程同时工作**。
@@ -1895,7 +1829,7 @@ $$
 - CMS回收器采用了**标记--清除**算法，同时也会“Stop The World”
 - 是**老年代**的垃圾回收器
 
-### 工作原理
+### 工作过程
 
 <img src="https://gitee.com/aruul/a-ru-img/raw/master/img/20210730144900.png" alt="image-20210730144859247" style="zoom:80%;" />
 
@@ -1965,16 +1899,16 @@ CMS整个过程主要分为四个阶段：初始标记、并发标记、重新�
 
 一个region有可能属于Eden，Survivor或者old。但是**一个region只可能属于一个角色**。
 
-G1垃圾收集器还增加了一种新的内存区域，叫做Humongous内存区域，如图中的H块。主要用于存储大对象，如果超过1.5个region，就放到H。
+G1垃圾收集器还增加了一种新的内存区域，叫做Humongous内存区域，如图中的H块。主要用于存储大对象，如果超过1.5个region，就放到H。有些大对象可能生命周期没有那么长，放在老年代可能不会被及时回收，所以有了H区，用于存放一些生命周期短的大对象。
 
 ### 优点
 
-**并行与并发**
+**1.并行与并发**
 
 - 并行性：G1在回收期间，可以有多个GC线程同时工作，有效利用多核计算能力。此时用户线程STW
 - 并发性：G1拥有与应用程序交替执行的能力，部分工作可以和应用程序同时执行，因此，一般来说，不会在整个回收阶段发生完全阻塞应用程序的情况
 
-**分代收集**
+**2.分代收集**
 
 - 从分代上看，**G1依然属于分代型垃圾回收器**，它会区分年轻代和老年代，年轻代依然有Eden区和Survivor区。但从堆的结构上看，它不要求整个Eden区、年轻代或者老年代都是连续的，也不再坚持固定大小和固定数量。
 
@@ -1984,12 +1918,12 @@ G1垃圾收集器还增加了一种新的内存区域，叫做Humongous内存区
 
 - 和之前的各类回收器不同，它**同时兼顾年轻代和老年代**。对比其他回收器，或者工作在年轻代，或者工作在老年代；
 
-**空间整合**
+**3.空间整合**
 
 - CMS：“标记-清除”算法、内存碎片、若干次GC后进行一次碎片整理
 - G1将内存划分为一个个的region。内存的回收是以region作为基本单位的。**Region之间是复制算法**，但**整体上实际可看作是标记-压缩算法**，两种算法都可以**避免内存碎片**。这种特性有利于程序长时间运行，分配大对象时不会因为无法找到连续内存空间而提前触发下一次GC。尤其是当Java堆非常大的时候，G1的优势更加明显。
 
-**可预测的停顿时间模型（即：软实时soft real-time）** 
+**4.可预测的停顿时间模型（即：软实时soft real-time）** 
 
 这是G1相对于CMS的另一大优势，G1除了追求低停顿外，还能建立**可预测的停顿时间模型**，能让使用者明确指定在一个长度为M毫秒的时间片段内，消耗在垃圾收集上的时间不得超过N毫秒。
 
@@ -1999,9 +1933,59 @@ G1垃圾收集器还增加了一种新的内存区域，叫做Humongous内存区
 
 ### 缺点
 
-相较于CMS，G1还不具备全方位、压倒性优势。比如在用户程序运行过程中，G1无论是为了垃圾收集产生的内存占用（Footprint）还是程序运行时的额外执行负载（Overload）都要比CMS要高。
+相较于CMS，G1还不具备全方位、压倒性优势。比如在用户程序运行过程中，G1无论是为了垃圾收集产生的内存占用（Footprint）还是程序运行时的**额外执行负载(要维护记忆集Remembered Set)**都要比CMS要高。
 
 从经验上来说，在小内存应用上CMS的表现大概率会优于G1，而G1在大内存应用上则发挥其优势。平衡点在6-8GB之间。
 
-【p191】
+### Remembered Set（记忆集）
+
+**一个对象被不同区域引用的问题**
+
+一个Region不可能是孤立的，一个Region中的对象可能被其他任意Region中对象引用，判断对象存活时，就需要扫描整个Java堆才能保证准确。这样的话在回收新生代时也不得不同时扫描老年代，这样的话会降低MinorGC的效率
+
+**解决方法：**
+
+无论G1还是其他分代收集器，JVM都是使用**Remembered Set**来避免全局扫描：
+
+**每个Region都有一个对应的Remembered Set；**
+
+每次Reference类型数据写操作时，都会产生一个Write Barrier(写屏障)暂时中断操作；
+
+然后检查将要写入的引用指向的对象是否和该Reference类型数据在不同的Region（其他收集器：检查老年代对象是否引用了新生代对象）；
+
+如果不同，通过CardTable把相关引用信息记录到引用指向对象的所在Region对应的Remembered Set中；
+
+当进行垃圾收集时，在GC根节点的枚举范围加入Remembered Set；就可以保证不进行全局扫描，也不会有遗漏。
+
+图示如下：
+
+<img src="https://gitee.com/aruul/a-ru-img/raw/master/img/20210731151601.png" alt="image-20210731151559780" style="zoom:80%;" />
+
+**说人话就是：相当于每个region都有一个表，记录了其他区指向本区对象的引用，这样的话不用扫描整个空间了**
+
+### 回收过程
+
+G1回收器垃圾回收主要包括三个环节：
+
+1. **年轻代(Young GC)**
+2. **老年代并发标记过程(Concurrent Marking)**
+3. **混合回收(Mixed GC)**
+
+(如果需要的，单线程、独占式、高强度的Full GC还是继续存在的。它针对GC的评估失败提供了一种失败保护机制，即强力回收)
+
+<img src="https://gitee.com/aruul/a-ru-img/raw/master/img/20210731145139.png" alt="image-20210731145138691" style="zoom:80%;" />
+
+**概述环节如下：**
+
+1. 当**年轻代的Eden区用尽时**开始年轻代的回收过程，G1的年轻代回收是**并行的独占式**收集器。在收集期间，G1 GC暂**停所有的应用程序线程**，启动**多线程执行年轻代的回收**，从**年轻代区间移动存活对象到Survivor区间或者老年区间**，也有**可能两个区间都会涉及。**
+2. 当堆内存使用达到一定值(默认45%)，开始老年代并发标记过程。
+3. 标记完成之后马上开始混合回收过程。对于一个混合回收期，G1GC从老年区间移动存活对象到空闲区间，这些空闲区间也就成为了老年代的一部分。和年轻代不同，老年代的G1回收器和其他GC不同，**G1的老年代回收器不需要整个老年代被回收，一次只需要扫描/回收一小部分老年代的Region就可以了。同时，这个老年代Region是和年轻代一起被回收的。**
+
+# 结束
+
+这个课程陆陆续续的学了半个多月，很惭愧只了解到了jvm的一小点理论和皮毛。
+
+希望这个笔记对你有用，如果觉得不错的话可以去点一个[star](https://github.com/aRuul/jvmStudy)。
+
+希望我们都有光明的未来，共勉之！
 
